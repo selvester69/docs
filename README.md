@@ -1,1 +1,5 @@
 # docs
+
+This repository contains few files required to created a java and angular2 based web application using spring MVC.
+
+Also the scjp guide.
