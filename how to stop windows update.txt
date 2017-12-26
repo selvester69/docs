@@ -1,0 +1,20 @@
+Stop The Windows Update Service
+
+As central as it is to the core of Windows 10, Windows Update is actually just another Windows process so it can be stopped with these simple steps:
+
+Open the Run command (Win + R), in it type: services.msc and press enter
+From the Services list which appears find the Windows Update service and open it
+In ‘Startup Type’ (under the ‘General’ tab) change it to ‘Disabled’
+Restart
+To re-enable Windows Update simply repeat these four steps, but change the Startup Type to ‘Automatic’
+================================================================================
+This is a halfway house: the group policy editor will notify you about new updates without automatically installing them (how previous generations of Windows always worked) - though again security updates will still install automatically.
+
+Note: Windows 10 Home users have to sit this one out, it is only for Windows 10 Education, Pro and Enterprise editions.
+
+Open the Run command (Win + R), in it type: gpedit.msc and press enter
+Navigate to: Computer Configuration -> Administrative Templates -> Windows Components -> Windows Update
+Open this and change the Configure Automatic Updates setting to ‘2 - Notify for download and notify for install’
+Open the Settings app (Win + I) and navigate to -> Update and Security -> Windows Updates. Click ‘Check for updates’ which applies the new configuration setting
+Restart
+========================================================
