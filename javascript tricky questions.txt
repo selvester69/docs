@@ -1,0 +1,474 @@
+1 - What are the differences between null and undefined?
+
+undefined means, value of the variable is not defined. JavaScript has a global variable undefined whose value is "undefined" and typeof undefined is also "undefined". Remember, undefined is not a constant or a keyword. undefined is a type with exactly one value: undefined. Assigning a new value to it does not change the value of the type undefined.
+
+null means empty or non-existent value which is used by programmers to indicate “no value”. null is a primitive value and you can assign null to any variable. null is not an object, it is a primitive value. For example, you cannot add properties to it. Sometimes people wrongly assume that it is an object, because typeof null returns "object".
+
+=======================================================================================================
+What are the differences between == and ===?
+
+== will not check types and === will check whether both sides are of same type
+=== compares the types and values. Hence, if both sides are not same type, answer is always false
+=======================================================================================================
+How would you compare two objects in JavaScript?
+
+objects like arrays, dates, and user defined objects are compared by their reference.
+This means it compares whether two objects are referring to the same location in memory.
+Equality check will check whether two objects have same value for same property.
+you can get the keys for both the objects. If the number of properties doesn't match, these two objects are not equal.
+Secondly, you will check each property whether they have the same value
+=======================================================================================================
+falsy: In javascript 6 things are falsy and they are- false, null, undefined, '', 0, NaN
+truthy: There are only two truthy things- true and everything that is not false
+=======================================================================================================
+Question: Is 'false' is false?
+Answer: No. Because, it's a string with length greater than 0. Only empty string is false.
+
+Question: Is ' ' is false?
+Answer: No. Because, it's not an empty string. There is a white space in it.
+
+Question: What about {}?
+Answer: true. It's an object. An object without any property is an object can't be falsy.
+
+Question: Tell me about []?
+Answer: This is also truthy. It's an array object (array is child of object) is truthy.
+
+Question: You talked bout '' to be falsy. What about new String('')?
+Answer: Though you are passing empty string to the string constructor, it is creating an String object. More precisely a instance of String object. It becomes an object. Hence, it is not false. so, it is truthy.
+
+Question: Tell me about new Boolean(false)
+Answer: truthy. As it creates an instance of the Boolean object which is an object. Object is truthy.
+
+Question: Boolean(function(){})
+Answer: true if you pass a truthy value to Boolean, it will be true.
+
+Question: Boolean(/foo/)
+Answer: true
+
+Question: true%1
+Answer: 0. When you are trying to find reminder of true, true becomes 1 and reminder of 1 while dividing by 1 is 0. you will get same result if you doe false%1
+
+Question: ''%1
+Answer: 0
+=======================================================================================================
+As [] is true, []==true should also be true. right?
+
+if([]){console.log('its true')} ---- is true
+but []==true is false as it compares type of object string and boolean
+=======================================================================================================
+Extend Core Object
+How could you write a method on instance of a date which will give you next day?
+I have to declare a method on the prototype of Date object. To get access to the current value of the instance of the date, i will use this
+Date.prototype.nextDay = function(){
+var currentDate = this.getDate();
+return new Date(this.setDate(currentDate +1));
+}
+=======================================================================================================
+bind
+If you want to use an arbitrary object as value of this, how will you do that?
+bind allows you to borrow a method and set the value of this without calling the function. 
+It simply returns an exact copy of the function with new value of this. 
+You can reuse the same function with new value of this without harming the old one.
+var monica = {
+name: 'Monica Geller',
+total: 400,
+deductMontlyFee: function(fee){
+ this.total = this.total - fee;
+ return this.name + ' remaining balance is '+ this.total; 
+}
+}
+var rachel = {name: 'Rachel Green', total: 1500};
+var rachelFeeDeductor = monica.deductMonthlyFee.bind(rachel, 200);
+
+rachelFeeDeductor(); //"Rachel Green remaining balance is 1300"
+rachelFeeDeductor(); //"Rachel Green remaining balance is 1100"
+=======================================================================================================
+If an older browser dont have bind function, how will you shim it ?
+
+Function.prototype.bind = Function.prototype.bind || function(context){
+var self = this;
+return function(){
+return self.apply(context, arguments);
+};
+}
+=======================================================================================================
+arguments and call
+Write a simple function to tell whether 2 is passed as parameter or not?
+function isTwoPassed(){
+var args = Array.prototype.slice.call(arguments);
+return args.indexOf(2) != -1;
+}
+
+isTwoPassed(1,4) //false
+isTowPassed(5,3,1,2) //true
+
+arguments is a local variable, available inside all functions that provides a collection of all the arguments passed to the function. arguments is not an array rather an array like object.
+Danger: Don't name any argument as "arguments" or dont create any local variable named as "arguments", this will override build in arguments object.
+=======================================================================================================
+apply
+Question: How could you use Math.max to find the max value in an array?
+Answer: Use apply on Math.max and pass the array as apply takes an array of arguments
+function getMax(arr){
+return Math.max.apply(null, arr);  
+}
+call and apply, both takes the value of this as first parameter. However, call takes a collection of arguments after first parameter whereas apply use an array of arguments as second parameter.
+=======================================================================================================
+What the heck is this in JavaScript?
+At the time of execution of every function, JavaScript engine sets a property to the function called this which refer to the current execution context. this is always refer to an object and depends on how function is called. There are 7 different cases where the value of this varies.
+
+1.In the global context or inside a function this refers to the window object.
+2.Inside IIFE (immediate invoking function) if you use "use strict", value of this is undefined. To pass access window inside IIFE with "use strict", you have to pass this.
+3.While executing a function in the context of an object, the object becomes the value of this
+4.Inside a setTimeout function, the value of this is the window object.
+5.If you use a constructor (by using new keyword) to create an object, the value of this will refer to the newly created object.
+6.You can set the value of this to any arbitrary object by passing the object as the first parameter of bind, call or apply
+7.For dom event handler, value of this would be the element that fired the event
+=======================================================================================================
+Question: What is typeof []
+Answer: Object. Actually Array is derived from Object. If you want to check array use Array.isArray(arr)
+
+Question: What is typeof arguments
+Answer: Object. arguments are array like but not array. it has length, can access by index but can't push pop, etc.
+
+Question: What is 2+true
+Answer: 3. The plus operator between a number and a boolean or two boolean will convert boolean to number. Hence, true converts to 1 and you get result of 2+1
+
+Question: What is '6'+9
+Answer: 69. If one of the operands of the plus (+) operator is string it will convert other number or boolean to string and perform a concatenation. For the same reason, "2"+true will return "2true"
+
+Question: What is the value of 4+3+2+"1"
+Answer: 91 . The addition starts from the left, 4+3 results 7 and 7+2 is 9. So far, the plus operator is performing addition as both the operands are number. After that 9 + "1" where one of the operands is string and plus operator will perform concatenation.
+
+Question: What is the value of "1"+2+4
+Answer: "124". For this one "1" + 2 will produce "12" and "12"+4 will generates "124".
+
+Question: What is the value of -'34'+10
+Answer: -24. minus(-) in front of a string is an unary operator that will convert the string to a number and will make it negative. Hence, -'34' becomes, -34 and then plus (+) will perform simple addition as both the operands are number.
+
+Question: What is the value of +'dude'
+Answer: NaN. The plus (+) operator in front of a string is an unary operator that will try to convert the string to number. Here, JavaScript will fail to convert the "dude" to a number and will produce NaN.
+
+Question: If you have var y = 1, x = y = typeof x; What is the value of x?
+Answer: "undefined"
+
+Question: for var a = (2, 3, 5); what is the value of a?
+Answer: 5. The comma operator evaluates each of its operands (from left to right) and returns the value of the last operand. ref: MDN
+
+Question: for var a = (1, 5 - 1) * 2 what is the value of a?
+Answer: 8
+
+Question: What is the value of !'bang'
+Answer: false. ! is NOT. If you put ! in front of truthy values, it will return false. Using !! (double bang) is a tricky way to check anything truthy or falsy by avoiding implicit type conversion of == comparison.
+
+Question: What is the value of parseFloat('12.3.4')
+Answer: 12.3
+
+Question: What is the value of Math.max([2,3,4,5]);
+Answer: NaN
+
+Question: 3 instanceof Number
+Answer: false
+
+Question:null == undefined
+Answer: true
+
+Question:What is the value of !!function(){};
+Answer: true
+
+Question: What is the value of typeof bar
+Answer: "undefined"
+
+Question: What is the value of typeof null
+Answer: "object"
+
+Question: If var a = 2, b =3 what would be value of a && b
+Answer: 3
+
+Question: What would be consoled var foo = 'outside'; function logIt(){console.log(foo); var foo = 'inside';} logIt();
+Answer: undefined
+
+Question: What is -5%2
+Answer:-1. the result of remainder always get the symbol of first operand
+
+Question: Why .1+.2 != .3
+Answer:
+
+Question: 42..toString()
+Anwser: "42"
+
+Question: 4.2..toString
+Anwser: //SyntaxError: Unexpected token .
+
+Question:42 . toString()
+Anwser: "42"
+
+Question: typeof(NaN)
+Anwser:"number"
+
+Question: 2 in [1,2]
+Anwser: false. Because "in" returns whether a particular property/index available in the Object. In this case object has index 0 and 1 but don't have 2. Hence you get false.
+
+
+=======================================================================================================
+Pass by value or by reference
+Question: Does JavaScript pass parameter by value or by reference?
+Primitive type (string, number, etc.) are passed by value and objects are passed by reference. If you change a property of the passed object, the change will be affected.
+=======================================================================================================
+memoization
+Question: How could you implement cache to save calculation time for a recursive fibonacci function?
+you could use poor man's memoization with a global variable. If fibonacci is already calculated it is served from the global memo array otherwise it is calculated.
+var memo = [];
+
+function _fibonacci(n) {
+if(memo[n]){    
+return memo[n];
+}
+else if (n < 2){
+ return 1;
+}else{
+ fibonacci(n-2) + fibonacci(n-1);
+}
+}
+=======================================================================================================
+How could you cache execution of any function?
+You could have a method where you will pass a function and it will internally maintain a cache object where calculated value will be cached. When you will call the function with same argument, the cached value will be served.
+
+What if you are passing more than one argument?
+First we have to use arguments to get all the parameters passed to the function and then we can generate key for the cache object. Generating key for the cache object could be tricky and one solution could be just get the all the parameters and concatenate those.
+return function(){
+var args = arguments;  
+var key = [].slice.call(args).join('');
+if(cache[key]){
+  return cache[key];
+}
+else{
+  cache[key] = fn.apply(thi, args);
+  return cache[key];
+}
+}
+=======================================================================================================
+Animation
+Question: How could you implement moveLeft animation?
+
+Use setInterval that will place the element to the left position by some pixels in every 10ms.
+you will see the element moving towards the desired position. When you call setInterval, it returns a timeId
+After reaching the desired location, you have to clear the time interval so that function will not be called again and again in every 10ms.
+function moveLeft(elem, distance) {
+var left = 0;
+
+function frame() {
+left++;
+elem.style.left = left + 'px';
+
+if (left == distance)
+  clearInterval(timeId)
+}
+
+var timeId = setInterval(frame, 10); // draw every 10ms
+}
+
+=======================================================================================================
+Currying
+Question: How would you implement currying for any functions?
+Curring is partial invocation of a function. Currying means first few arguments of a function is pre-processed and a function is returned.
+Currying means first few arguments of a function is pre-processed and a function is returned.
+The returning function can add more arguments to the curried function.
+It's like if you have given one or two spice to the curry and cooked little bit, still you can add further spice to it.
+function addBase(base){
+return function(num){
+return base + num;
+}
+}
+
+var addTen = addBase(10);
+addTen(5); //15
+addTen(80); //90
+addTen(-5); //5
+You are creating a closure that return a function. When you are curring with a new number, new number is added to the base you have provided.
+=======================================================================================================
+What are differences between host object and native object?
+The JavaScript spec groups built-in objects and user objects together as native objects.
+native objects
+object in an ECMAScript implementation whose semantics are fully defined by this specification rather than by the host environment.
+Built-in objects: 
+String, Math, RegExp, Object, Function etc. - core predefined objects always available in JavaScript. Defined in the ECMAScript spec.
+User objects: 
+objects defined in JavaScript code  by the user.
+host objects
+object supplied by the host environment to complete the execution environment of ECMAScript.
+objects like window, XmlHttpRequest, DOM nodes and so on, which is provided by the browser environment. They are distinct from the built-in objects because not all environment will have the same host objects. If JavaScript runs outside of the browser, for example as server side scripting language like in Node.js, different host objects will be available.
+
+=======================================================================================================
+How will you get query string in a browsers URL?
+var querystring = location.search.replace('?', '').split('&');
+for (var i = 0; i < querystring.length; i++) {
+var name = querystring[i].split('=')[0];
+var value = querystring[i].split('=')[1];
+queryObj[name] = value;
+}
+=======================================================================================================
+What is the difference between slice, substr, substring?
+slice() extracts a part of a string and returns the extracted part in a new string.
+If a parameter is negative, the position is counted from the end of the string.
+substring() is similar to slice().
+The difference is that substring() cannot accept negative indexes.
+substr() is similar to slice().
+The difference is that the second parameter specifies the length of the extracted part.
+If the first parameter is negative, the position counts from the end of the string.
+The second parameter can not be negative, because it defines the length.
+=======================================================================================================
+A synchronous example
+let asyncTest = () => {
+console.log('first');
+console.log('last');
+}
+asyncTest();
+--------------
+An asynchronous example
+let asyncTest = () => {
+console.log('first');
+setTimeout(() => console.log('second'), 2000);
+console.log('last');
+}
+asyncTest();
+=======================================================================================================
+global scope
+Global variable is  accessible (get or set the value of it) from any part of your application.
+Global Functions could be accessible from any part of your application.
+Local Scope
+You can only access one (get or set the value of it)- in the local scope.
+In JavaScript local scope is defined by a function. If you declare a variable inside a function,
+you can only access it (get or set the value) inside of the function. 
+If you try to access it from outside of the function, you will get a reference error.
+Local Functions : any function inside another function is called a local function.
+You can only execute it inside the outer function.
+If you really want to get the inner function,
+you have to return the function by creating closure (stay tuned for closure information).
+--------------------------
+Multiple Scope
+Multiple functions:: If you have more than one functions and you execute them,
+each one of them will create their own scope. However, every execution scope will be linked to the global scope.
+Thats is how you have access to the global scope variable and function from any part of your application.
+Nested Scope:: If you execute a function within a function, the inner function will create a scope inside the outer function
+the inner scope will have access to the outer function variable, while the outer one will have access to the global variable
+Closure:: If you have a function inside a function, this is called closure.
+Closure is a powerful feature of JavaScript for encapsulation. Some of your function could be closure
+---------------------------
+Access a Variable
+JavaScript doesn't know right away whether this variable is a global variable, a local variable or a parameter.
+First (Local Scope): It checks the local variables. 
+	If it is in the local scope, JavaScript will grab it and give it to you.
+Second (Parameters): If the variable doesn't exists in the local scope, it will then check the the parameters.
+Third (Outer Scopes) If the variable you are asking for doesn't exists in the parameter, 
+	JavaScript starts walking outside of the function via the scope chain of the current scope. 
+	It does this until it hits the end of the chain. 
+	The end of the scope is called the "window" object in JavaScript.
+Fourth (Window): If the variable exists in the global scope, 
+	it would be a property of the global object "window". JavaScript will grab it and give it to you.
+Fifth (Undefined): If the variable doesn't exists in the window object, 
+	JavaScript will respond with "undefined". This means the variable you are looking for, doesn't exists.
+-----------------------------
+Hoisting
+JavaScript does the exact same thing to hoist (raise) a variable declaration and a function declaration to the top of a function scope
+Those variables and functions can be used from any part of the function without raising no reference Exception.
+the variable "b" is declared after the return statement. If you execute the foo function, you will not receive the no reference error. If you dont trust me, copy this code and run it at your console.
+function foo(){
+  return b;
+  var b = 7;  
+}
+
+foo(); //undefined
+While creating Context of a function, JavaScript execution engine, scan through the whole function and brings the variable declaration to the top of the scope
+ Only the variable declaration is hoisted. And the variable gets the default value of unassigned, variable which is "undefined"
+  if you have a function declaration, the full function will be hoisted.
+  function: Any function declaration will be hoisted at the top.
+  variable: Following the function, the variable declaration will be hoisted next. 
+  If you have a function expression (set function to a variable), only the variable part will be hoisted.
+  The assignment of the function to a variable will stay in its place.
+  function myFunc() {    
+    var bar = function() {
+            return 'world';
+        };    
+    function foo() {
+        return 'fooed';
+    }
+    var a = 5;
+}
+he function declaration of the function foo will be hoisted to the top, followed by the variable bar (from function expression) and variable "a". Post-hoisting
+function myFunc() {
+    function foo() {
+        return 'fooed';
+    }    
+    var bar;
+    var a;    
+    bar = function() {
+            return 'world';
+        };
+    a = 5;        
+}
+---------------------------------------
+Closure
+If you have a function within a function, execution of the inner function will create a scope inside of the outer function- a nested scope
+Because the inside function scope is enclosed by the outer function scope, the inner function scope is called a closure
+ to be a closure, you dont have to return a function, you just have to call a function inside a function.
+ function a(){
+  function b(){
+     console.log('closure');
+  }
+  b(); //creates closure
+}
+---------
+function counter(){
+    var i = 0;
+    
+    return function(){
+       return i++;
+    }
+}
+var a = counter();
+a(); //0
+a(); //1
+a(); //2
+a(); //3
+a(); //4
+a(); //5
+This means, each closure maintains separate private variables of the outer function. This is a very powerful feature of JavaScript
+ You would not be able to access (get or set) the value of "i" from outside. Hence the privacy of the value of "i" is maintained secretly. This is called encapsulation in object oriented programming.
+ Don't use a closure when you dont need a closure. And don't create too many nested scope.
+ Don't hold excessively large private memory. This could cause memory leak
+ ---------------------------------
+ Scope:: Scope determines the variable access of a function when it is executed. It depends on where and how a function is executed. Scope is unique to each execution.
+ Context:: Context depends on how the function is called. The laymen version of context is the value of "this". If you want to learn more, read Execution context and Stack in JavaScript or watch
+=======================================================================================================
+window vs document
+Question: Is there any difference between window and document?
+Yes. JavaScript has a global object and everything runs under it. 
+window is that global object that holds global variables, global functions, location, history everything is under it. 
+Besides, setTimeout, ajax call (XMLHttpRequest), console or localStorage are part of window.
+=======================================================================================================
+http://www.thatjsdude.com/interview/dom.html
+https://github.com/khan4019/front-end-Interview-Questions
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
+=======================================================================================================
