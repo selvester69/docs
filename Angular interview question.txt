@@ -167,6 +167,10 @@ More component code and less HTML markup
 https://blog.angular-university.io/introduction-to-angular-2-forms-template-driven-vs-model-driven/
 ===================================================================================================================
 What is a dumb, or presentation, component? What are the benefits of using dumb components?
+smart component - also know sometimes as application-level components, container components or controller components
+it interacts with service and is  kind of large component, interact with service also
+Presentation Components: also known sometimes as pure components or dumb components
+only used for showing data template by using @input and @ Output
 ===================================================================================================================
 How do components communicate with each other?
 Passing the reference of one component to another(Input)
