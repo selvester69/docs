@@ -6,28 +6,172 @@ https://www.codeproject.com/Articles/1071285/Latest-TypeScript-Interview-Questio
 https://www.codeproject.com/Articles/1169073/Angular-Interview-Questions
 ===================================================================================================================
 What are the differences between AngularJS (angular 1.x) and Angular (Angular 2.x and beyond)?
-
+https://medium.com/@angularminds/comparison-between-angular-1-vs-angular-2-vs-angular-4-62fe79c379e3
+10 major differences are
+1-AngularJS architecture is based on MVC . Angular 2 architecture is based on service/controller 
+	Upgrade of the version from 2.0 to 4.0 has reduced it’s bundled file size by 60%.
+2-Angular JS use JavaScript. Angular v2.0 angular team used typescript
+ controller concept which was present in Angular v1.0 is eliminated in Angular v2.0. Angular v2.0 has changed to component based UI.
+ Angular 2.0 has made it possible to accomplish the native applications for a mobile platform like React Native. 
+ Angular 2.0 provides application layer and the rendering layer. 
+ view engine introduced Angular 4, which decreased the size of the generated code using the Ahead of Time (AOT) manner.
+  Angular Ahead-of-Time (AOT) compiler converts your Angular HTML and TypeScript code into efficient JavaScript code during the build phase before the browser downloads and runs that code.
 ===================================================================================================================
 What is a component? Why would you use it?
+Components are the most basic building block of an UI in an Angular application. 
+An Angular application is a tree of Angular components. 
+Angular components are a subset of directives. 
+Unlike directives, components always have a template and only one component can be instantiated per an element in a template.
+Components are basically classes that interact with the .html file of the component, which gets displayed on the browser.
+it divides angular into different smaller parts
+one or more components forms one module which can be displayed as html in angular.
+it is used to split the specific functionality to smaller parts.
+app component which is created by default will always remain the parent and the next components created will form the child component.
+A component must belong to an NgModule in order for it to be usable by another component or application
 ===================================================================================================================
 What is the minimum definition of a component?
+The absolute minimal configuration for a @Component in angular is a template. 
+Both template properties are set to optional because you have to define either template or templateUrl.
+When you don't define them, you will get an exception like this;
+No template specified for component 'ComponentName'
+A selector property is not required, as you can also use your components in a route.
 ===================================================================================================================
 What is a module, and what does it contain?
+a module is a mechanism to group components, directives, pipes and services that are related, in such a way that can be combined with other modules to create an application
+Modules allow you to manage your components to bring modularity to your app.
 ===================================================================================================================
 What is a service, and when will you use it?
+Angular services are singleton objects which get instantiated only once during the lifetime of an application.
+They contain methods that maintain data throughout the life of an application.
+The main objective of a service is to organize and share business logic, models, or data and functions with different components of an Angular application.
+An Angular service is a stateless object and provides some very useful functions.
+These functions can be invoked from any component of Angular, like Controllers, Directives, etc
 ===================================================================================================================
 What is a promise? Explain it laymen's terms.
+A promise represents the eventual result of an asynchronous operation.
+that basically means is that you wont be able to access the result of that async operation immediately.you have to wait until the promise has been settled.
+day to day example: when you were younger and told your mom "I promise to take out the trash". That meant you will fulfill your promise and throw out the trash some time later in the day. That could be in a couple of minutes or a couple of hours.
+var promise = new Promise(function(resolve, reject) {
+  // do a thing, possibly async, then…
+  if (/* everything turned out fine */) {
+    resolve("Stuff worked!");
+  }
+  else {
+    reject(Error("It broke"));
+  }
+});
+promise.then(function(result) {
+  console.log("Promise worked");
+}, function(err) {
+  console.log("Something broke");
+});
+The promise constructor takes in one argument:  callback function with two parameters resolve and reject.
+there are 3 states to a promise:
+
+pending: awaiting promise response
+resolve : promise has successfully returned
+reject: failure occurred
+
+complete example
+called function
+const loadImage = url => {
+  return new Promise(function(resolve, reject) {
+
+    //Open a new XHR
+    var request = new XMLHttpRequest();
+    request.open('GET', url);
+
+    // When the request loads, check whether it was successful
+    request.onload = function() {
+      if (request.status === 200) {
+        // If successful, resolve the promise
+        resolve(request.response);
+      } else {
+        // Otherwise, reject the promise
+        reject(Error('An error occurred while loading image. error code:' + request.statusText));
+      }
+    };
+    request.send();
+  });
+};
+caller function
+const embedImage = url => {
+  loadImage(url).then(function(result) {
+      const img = new Image();
+      var imageURL = window.URL.createObjectURL(result);
+      img.src = imageURL;
+      document.querySelector('body').appendChild(img);
+    },
+    function(err) {
+      console.log(err);
+    });
+}
 ===================================================================================================================
 What are the lifecycle hooks for components and directives?
+ngOnChanges()-when Angular (re)sets data-bound input properties. receives a SimpleChanges object of current and previous property values
+ngOnInit()-Initialize the directive/component after Angular first displays the data-bound properties
+ngDoCheck()-Detect and act upon changes that Angular can't or won't detect on its own.
+ngAfterContentInit()-after Angular projects external content into the component's view
+ngAfterContentChecked()-after Angular checks the content projected into the directive/component.
+ngAfterViewInit()-after Angular initializes the component's views and child views / the view that a directive is in.
+ngAfterViewChecked()-after Angular checks the component's views 
+ngOnDestroy()- before Angular destroys the directive/component. 
+		Unsubscribe Observables and detach event handlers to avoid memory leaks.
 ===================================================================================================================
 What are pipes? Give me an example.
+pipe is a kind of transformer.
+A pipe takes in data as input and transforms it to a desired output
+example 
+Async ---   <li *ngFor="let item of data | async">
+currency ---
+			{{ price | currency:'CAD' }}
+			{{ price | currency:'USD':true }}
+			{{ price | currency:'EUR':false:3.2-2 }}
+date ---
+{{ someDate | date:'medium' }}
+{{ someDate | date:'fullDate' }}
+{{ someDate | date:'yy' }}
+{{ someDate | date:'Hm' }}
+Json---
+{{ someObject | json }}
+uppercase, lowercase, percentage, slice
+custom pipe
+import { Pipe, PipeTransform } from '@angular/core';
 
+@Pipe({name: 'reverseStr'})
+export class ReverseStr implements PipeTransform {
+  transform(value: string): string {
+    let newStr: string = "";
+    for (var i = value.length - 1; i >= 0; i--) {
+      newStr += value.charAt(i);
+    }
+    return newStr;
+  }
+}
 ===================================================================================================================
 What are the differences between reactive forms and template driven forms?
+Template Driven Forms Features-
+Easier to use
+Suitable for simple scenarios
+Uses Two way data binding(using [(NgModel)] syntax)
+Minimal component code
+Automatic track of the form and its data(handled by Angular)
+Unit testing is challenge
+
+Reactive Forms Features-
+Easier Unit testing
+More flexible,So Handles any complex scenarios.
+Reactive transformations can be made possible such as Adding elements dynamically
+No data binding is done(Immutable data model preferred by most developers)
+More component code and less HTML markup
+https://blog.angular-university.io/introduction-to-angular-2-forms-template-driven-vs-model-driven/
 ===================================================================================================================
 What is a dumb, or presentation, component? What are the benefits of using dumb components?
 ===================================================================================================================
 How do components communicate with each other?
+Passing the reference of one component to another(Input)
+Communication through parent component(EventEmitter)
+Communication through Service
 ===================================================================================================================
 How would you use http to load data from server?
 ===================================================================================================================
