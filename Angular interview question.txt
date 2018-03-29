@@ -191,15 +191,119 @@ How would you display form validation errors?
 ===================================================================================================================
 Which lifecycle hook would you use to unsubscribe an observable?
 ===================================================================================================================
-How are services injected to your application?
+ow are services injected to your application?
+Dependency Injection (DI) is a way to create objects that depend upon other objects. A Dependency Injection system supplies the dependent objects (called the dependencies) when it creates an instance of an object.
+@Injectable()
+export class HeroService {
+  getHeroes() { return HEROES; }
+}
+inject dependency into constructor of component
+constructor(heroService: HeroService) {
+    this.heroes = heroService.getHeroes();
+  }
+  Component injectors are independent of each other and each of them creates its own instances of the component-provided services.
+   when Angular creates a new instance of a component that has @Component.providers, it also creates a new child injector for that instance
+   When Angular destroys one of these component instance, it also destroys the component's injector and that injector's service instances
 ===================================================================================================================
 How would you create route parameters and access them from a component?
+{ path: 'product-details/:id', component: ProductDetails }
+<a *ngFor="let product of products"
+  [routerLink]="['/product-details', product.id]">
+  {{ product.name }}
+</a>
+goToProductDetails(id) {
+  this.router.navigate(['/product-details', id]);
+}
 ===================================================================================================================
 Why would you use Angular instead of another framework, e.g., React?
+Angular is a TypeScript-based Javascript framework
+Angular relies on TypeScript. This offers more consistency in related examples and open source projects 
+Angular is a framework rather than a library because it provides strong opinions as to how your application should be structured and also has more functionality out of the box.
+React is described as “a JavaScript library for building user interfaces”
+	not as a single-page application, 
+	React is also used by Airbnb, Uber, Netflix, Twitter, Pinterest, Reddit, Udemy, Wix, Paypal, Imgur, Feedly, Stripe, Tumblr, Walmart
+	React focuses on the use of Javascript ES6
+	Their libraries can be paired to all kinds of packages
+
+Building UIs is hard, because there are states everywhere data changing over time entails complexity
+the status of the complete application is stored in an object tree within a single store. This helps with debugging the application, and some functionalities are easier to implement.
+A big difference between React and Angular is one-way vs. two-way binding. Angular’s two-way-binding changes the model state when the UI element (e.g. a user input) is updated. React only goes one way: it updates the model first and then it renders the UI element
+You can work with React or Vue by simply adding the Javascript library to the source code. This is not possible with Angular because of its use of TypeScript.
+React and Vue give you more control to size an application by selecting only the things which are really necessary. They offer more flexibility to shift from an SPA to microservices using parts of a former application. Angular work best for SPA, as it is probably too bloated to be used for microservices.
 ===================================================================================================================
 What is the difference between an observable and a promise?
+
+A Promise handles a single event when an async operation completes or fails.
+An Observable is like a Stream (in many languages) and allows to pass zero or more events where the callback is called for each event.
+Observable also has the advantage over Promise to be cancelable
+If the result of an HTTP request to a server or some other expensive async operation isn't needed anymore, the Subscription of an Observable allows to cancel the subscription, while a Promise will eventually call the success or failed callback even when you don't need the notification or the result it provides anymore.
+
+Promises vs Observables
+
+promise:
+returns a single value
+not cancellable
+more readable code with try/catch and async/await
+observable
+works with multiple values over time
+cancellable
+supports map, filter, reduce and similar operators
+use Reactive Extensions (RxJS)
+an array whose items arrive asynchronously over time
+
+Promise based approach
+@Injectable()
+export class WikipediaService {
+  constructor(private jsonp: Jsonp) {}
+
+  search (term: string) {
+    var search = new URLSearchParams()
+    search.set('action', 'opensearch');
+    search.set('search', term);
+    search.set('format', 'json');
+    return this.jsonp
+                .get('http://en.wikipedia.org/w/api.php?callback=JSONP_CALLBACK', { search })
+                .toPromise()
+                .then((response) => response.json()[1]);
+  }
+}
+export class AppComponent {
+  items: Array<string>;
+
+  constructor(private wikipediaService: WikipediaService) {}
+
+  search(term) {
+    this.wikipediaService.search(term)
+                         .then(items => this.items = items);
+  }
+}
+
+Observable
+export class App {
+  items: Array<string>;
+  term = new FormControl();
+  constructor(private wikipediaService: WikipediaService) {
+    this.term.valueChanges
+              .debounceTime(400)        // wait for 400ms pause in events
+              .distinctUntilChanged()   // ignore if next search term is same as previous
+              .subscribe(term => this.wikipediaService.search(term).then(items => this.items = items));
+  }
+}
+
 ===================================================================================================================
 What is the difference between a component and a directive?
+
+Component
+is also a type of directive with template,styles and logic part which is most famous type of directive among all in angular2. In this type of directive you can use other directives whether it is custom or builtin in the @component annotation like following:
+@Component({
+    selector: "my-app"
+    directives: [custom_directive_here]
+})
+
+Attribute directives
+are used to give custom behaviour or style to the existing elements by applying some functions/logics. like ngStyle is a attribute directive to give style dynamically to the elements
+Structural directives
+like *ngFor and *ngIf used for changes the DOM layout by adding and removing DOM elements. 
 ===================================================================================================================
 Why would you use typescript aka benefits of typescript?
 ===================================================================================================================
