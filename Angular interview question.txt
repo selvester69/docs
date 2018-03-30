@@ -1082,7 +1082,7 @@ Tell me about feature module and shared module?
 easy 
 ===================================================================================================================
 What would you not put in a shared module?
-
+those services directives components which are used only once and in any other component or service because shared modules are shared across all applications and we dont want it to be heavily loaded .
 ===================================================================================================================
 Why angular uses decorator?
 Basically, decorators in Angular 2 apply metadata on classes leveraging the Reflect Metadata library. When Angular 2 will use the class, it will get this metadata to configure the expected behavior, for example in the case of a component.
@@ -1095,76 +1095,653 @@ Method decorators for methods inside classes, e.g. @HostListener
 Parameter decorators for parameters inside class constructors, e.g. @Inject
 ===================================================================================================================
 What is async validation and how is it done?
+https://www.concretepage.com/angular-2/angular-custom-async-validator-example
+Angular provides AsyncValidatorFn and AsyncValidator interfaces and NG_ASYNC_VALIDATORS provider for asynchronous validation. The methods of AsyncValidatorFn and AsyncValidator interfaces will return Promise<ValidationErrors | null> or Observable<ValidationErrors | null> . If validation fails, they contain ValidationErrors otherwise null.
+interface AsyncValidatorFn { 
+  (c: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null>
+} 
+AsyncValidatorFn has a method declaration that has argument as AbstractControl and it will contain latest value of the form control.
+export function existingMobileNumberValidator(userService: UserService): AsyncValidatorFn {
+  return (control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> => {
+    return userService.getUserByMobileNumber(control.value).map(
+      users => {
+        return (users && users.length > 0) ? {"mobNumExists": true} : null;
+      }
+    );
+  };
+  Any dependency can be passed as arguments. In the above validator function we are passing UserService as an argument. UserService is being used to fetch data over HTTP. 
+  If validation is successful then null will be returned by our async validator and if there is validation error then value of type ValidationErrors i.e. {"mobNumExists": true} will be returned
+  To display error message we can access the value of mobNumExists using errors object as errors.mobNumExists 
+constructor(formState: any = null, 
+              validatorOrOpts?: ValidatorFn | ValidatorFn[] | AbstractControlOptions | null, 
+              asyncValidator?: AsyncValidatorFn | AsyncValidatorFn[] | null) 
+1.Using FormControl
+In the absence of synchronous validators, we will use asynchronous validators as following.
+mobileNumber = new FormControl('', 
+   null,
+  [ existingMobileNumberValidator(this.userService),
+    blackListedMobileNumberValidator(this.userService) ] //async validators
+);
+We have passed null for synchronous validators. 
+2.Using FormGroup
+userForm = new FormGroup({
+   mobileNumber: new FormControl('', 
+         [ Validators.required, Validators.maxLength(10) ], //sync validators
+         [ existingMobileNumberValidator(this.userService),
+           blackListedMobileNumberValidator(this.userService) ]), //async validators
+
+}); 
+3.Using FormBuilder
+this.userForm = this.formBuilder.group({
+   mobileNumber: ['', 
+        [ Validators.required, Validators.maxLength(10) ], //sync validators
+        [ existingMobileNumberValidator(this.userService),
+          blackListedMobileNumberValidator(this.userService) ] //async validators
+   ],
+}); 
+<input formControlName="mobileNumber"> Error messages can be displayed as following.
+<div *ngIf="mobileNumber.errors" class = "error"> 
+  <div *ngIf="mobileNumber.errors.required"> 
+     Mobile number required.
+  </div>			   
+  <div *ngIf="mobileNumber.errors.maxlength"> 
+     Mobile number must be 10 digit max.
+  </div>
+  <div *ngIf="mobileNumber.errors.mobNumExists"> 
+     Mobile number already exists. 
+  </div>	
+  <div *ngIf="mobileNumber.errors.blackListedMobNum"> 
+     Black listed mobile number.
+  </div>	
+</div> 
+
+Angular provides AsyncValidator interface using which we create custom async validator directive
+interface AsyncValidator extends Validator { 
+  validate(c: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null>
+} 
+import { Directive } from '@angular/core';
+import { AsyncValidator, NG_ASYNC_VALIDATORS, AbstractControl, ValidationErrors } from '@angular/forms';
+import { Observable } from "rxjs/Observable";
+import 'rxjs/add/operator/map';
+
+@Directive({
+  selector: '[mobNumExists][formControlName],[mobNumExists][formControl],[mobNumExists][ngModel]',
+  providers: [{provide: NG_ASYNC_VALIDATORS, useExisting: ExistingMobileNumberValidatorDirective, multi: true}]
+})
+export class ExistingMobileNumberValidatorDirective implements AsyncValidator {
+  constructor(private userService: UserService) {  }
+
+  validate(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
+    return this.userService.getUserByMobileNumber(control.value).map(
+      users => {
+        return (users && users.length > 0) ? {"mobNumExists": true} : null;
+      }
+    );
+  }
+} 
+NG_ASYNC_VALIDATORS is a provider for asynchronous validators and it is used with multi: true
+In our async validator directive, we have following selector.
+[mobNumExists][formControlName]
+[mobNumExists][formControl]
+[mobNumExists][ngModel] 
+If we are creating async validator using AsyncValidatorFn and AsyncValidator both, we can utilize the method definition of AsyncValidatorFn into the validate method of AsyncValidator as following.
+export function existingMobileNumberValidator(userService: UserService): AsyncValidatorFn {
+  return (control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> => {
+    return userService.getUserByMobileNumber(control.value).map(
+      users => {
+        return (users && users.length > 0) ? {"mobNumExists": true} : null;
+      }
+    );
+  };
+}
+
+@Directive({
+  selector: '[mobNumExists][formControlName],[mobNumExists][formControl],[mobNumExists][ngModel]',
+  providers: [{provide: NG_ASYNC_VALIDATORS, useExisting: ExistingMobileNumberValidatorDirective, multi: true}]
+})
+export class ExistingMobileNumberValidatorDirective implements AsyncValidator {
+  constructor(private userService: UserService) {  }
+
+  validate(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
+     return existingMobileNumberValidator(this.userService)(control);
+  }
+} 
 ===================================================================================================================
 Why do you need type definitions?
+My understanding of typescript definition files is that they are used to provide tooling support and are not required to compile typescript.
+Dynamically typed languages like JavaScript provide a lot of expressiveness and power to the programmer. By not having to think about strict types, a program is more maleable since it will run no matter what, allowing the programmer to write code very quickly.
+This decrease in velocity can be attributed to a couple of factors.
+1.Bugs introduced by type mismatches (such as null types) take time away from feature development.
+2.Each time existing code is examined, the programmer needs to figure out what the intended types are again.
 ===================================================================================================================
 Which components will be notified when an event is emitted?
+Let’s finalise the basics of parent-child and child-parent communication by introducing EventEmitter and @Output
+@Component({...})
+export class CounterComponent {
+  @Input()
+  count: number = 0;
+  @Output()
+  change: EventEmitter<number> = new EventEmitter<number>();
+  increment() {
+    this.count++;
+    this.change.emit(this.count);
+  }
+  decrement() {
+    this.count--;
+    this.change.emit(this.count);
+  }
+}
+
+@Component({
+  selector: 'app-root',
+  template: `
+    <div class="app">
+      Parent: {{ myCount }}
+      <counter
+        [count]="myCount"
+        (update)="countChange($event)">
+      </counter>
+    </div>
+  `
+})
+export class AppComponent {
+  myCount: number = 10;
+  countChange(event) {
+    this.myCount = event;
+  }
+}
+
 ===================================================================================================================
 Why would you export from ngModule?
+An export what you put is the exports property of the @NgModule decorator. It enables an Angular module to expose some of its components/directives/pipes to the other modules in the applications. Without it, the components/directives/pipes defined in a module could only be used in that module.
+===================================================================================================================
+Why is a service provided in a lazy loaded module visible only to that module?
+Unlike providers of the modules loaded at launch, providers of lazy loaded modules are module-scoped.
+When the Angular router lazy-loads a module, it creates a new execution context. That context has its own injector which is a direct child of the application injector.
+The router adds the lazy module's providers and the providers of its imported modules to this child injector.
+These providers are insulated from changes to application providers with the same lookup token. When the router creates a component within the lazy loaded context, Angular prefers service instances created from these providers to the service instances of the application root injector.
 ===================================================================================================================
 Why is it bad if SharedModule provides a service to a lazy loaded module?
+This question arose in the Angular Module chapter when we discussed the importance of keeping providers out of the SharedModule.
+Suppose we had listed the UserService in the module's providers (which we did not). Suppose every module imports this SharedModule (which they all do).
+
+When the app starts, Angular eagerly loads the AppModule and the ContactModule.
+Both instances of the imported SharedModule would provide the UserService. Angular registers one of them in the root app injector (see above). Then some component injects UserService, Angular finds it in the app root injector, and delivers the app-wide singleton UserService. No problem.
+Now consider the HeroModule which is lazy loaded!
+When the router lazy loads the HeroModule, it creates a child injector and registers the UserService provider with that child injector. The child injector is not the root injector.
+When Angular creates a lazy HeroComponent, it must inject a UserService. This time it finds a UserService provider in the lazy module's child injector and creates a new instance of the UserService. This is an entirely different UserService instance than the app-wide singleton version that Angular injected in one of the eagerly loaded components.
+That's almost certainly a mistake.
 ===================================================================================================================
 Can you explain the difference between ActivatedRoute and RouterState?
+After the end of each successful navigation lifecycle, the router builds a tree of ActivatedRoute objects that make up the current state of the router.
+ We can access the current RouterState from anywhere in our application using the Router service and the routerState property.
+RouterState is the current state of the router including a tree of the currently activated routes in our application along convenience methods for traversing the route tree.
+Since ActivatedRoute can be reused, ActivatedRouteSnapshot is an immutable object representing a particular version of ActivatedRoute.
+ It exposes all the same properties as ActivatedRoute as plain values, while ActivatedRoute exposes them as observables.
 ===================================================================================================================
 Which service will you put in the module and why?
+services whose single instance is required across all component/pipes we declare them in module
+because if we use service as injector in every component then multiple instances of them may get created.
 ===================================================================================================================
 What is a factory Component?
+Angular’s ComponentFactory is nothing more than a factory of components; the name is self-explanatory. It is a very powerful way to dynamically add components to your application by using metadata.
+First, let’s create a view container as the placeholder for our components and add a template reference to it:
+@Component({
+  selector: 'my-app',
+  template: `
+    <div>
+      <h2>Lets dynamically create some components!</h2>
+      <button (click)="createHelloWorldComponent()">Create Hello World</button>
+      <button (click)="createWorldHelloComponent()">Create World Hello</button>
+    </div>
+    <dynamic-component [componentData]="componentData"></dynamic-component>
+  `,
+})
+export class App {  
+  componentData = null;
+
+  createHelloWorldComponent(){
+    this.componentData = {
+      component: HelloWorldComponent,
+      inputs: {
+        showNum: 9
+      }
+    };
+  }
+
+  createWorldHelloComponent(){
+    this.componentData = {
+      component: WorldHelloComponent,
+      inputs: {
+        showNum: 2
+      }
+    };
+  }
+}
+----------------
+import {Component, ViewContainerRef, ViewChild, ReflectiveInjector, ComponentFactoryResolver} from '@angular/core';  
+import HelloWorldComponent from './hello-world-component';  
+import WorldHelloComponent from './world-hello-component';
+
+@Component({
+  selector: 'dynamic-component',
+  entryComponents: [HelloWorldComponent, WorldHelloComponent], // Reference to the components must be here in order to dynamically create them
+  template: `
+    <div #dynamicComponentContainer></div>
+  `,
+})
+export default class DynamicComponent {  
+  currentComponent = null;
+  @ViewChild('dynamicComponentContainer', { read: ViewContainerRef }) dynamicComponentContainer: ViewContainerRef;
+
+  constructor(private resolver: ComponentFactoryResolver) {
+
+  }
+
+  …
+}
+---------------
+@Input() set componentData(data: {component: any, inputs: any }) {
+    if (!data) {
+      return;
+    }
+
+    // Inputs need to be in the following format to be resolved properly
+    let inputProviders = Object.keys(data.inputs).map((inputName) => {return {provide: inputName, useValue: data.inputs[inputName]};});
+    let resolvedInputs = ReflectiveInjector.resolve(inputProviders);
+
+    // We create an injector out of the data we want to pass down and this components injector
+    let injector = ReflectiveInjector.fromResolvedProviders(resolvedInputs, this.dynamicComponentContainer.parentInjector);
+
+    // We create a factory out of the component we want to create
+    let factory = this.resolver.resolveComponentFactory(data.component);
+
+    // We create the component using the factory and the injector
+    let component = factory.create(injector);
+
+    // We insert the component into the dom container
+    this.dynamicComponentContainer.insert(component.hostView);
+
+    // Destroy the previously created component
+    if (this.currentComponent) {
+      this.currentComponent.destroy();
+    }
+
+    this.currentComponent = component;
+  }
 ===================================================================================================================
 What is lazy loading and why will you use it?
 ===================================================================================================================
 What is Ahead of time (AOT) compilation and why will you use it?
+The Angular Ahead-of-Time (AOT) compiler converts your Angular HTML and TypeScript code into efficient JavaScript code during the build phase before the browser downloads and runs that code
+An Angular application consists largely of components and their HTML templates. Before the browser can render the application, the components and templates must be converted to executable JavaScript by an Angular compiler.
+Why compile with AOT?
+Faster rendering- the browser downloads a pre-compiled version of the application
+Fewer asynchronous requests- compiler inlines external HTML templates and CSS style sheets within the application JavaScript
+Smaller Angular framework download size- There's no need to download the Angular compiler if the app is already compiled
+Detect template errors earlier - AOT compiler detects and reports template binding errors during the build step before users can see them
+Better security - compiles HTML templates and components into JavaScript files long before they are served to the client
 ===================================================================================================================
 What are some of the Angular Style Guide suggestions you follow on your code? Why?
+https://angular.io/guide/styleguide
+
+The structure should follow these 4 basic guidelines. When I find my structure is not feeling comfortable, I go back and revisit these LIFT guidelines
+Locating our code is easy
+Identify code at a glance
+Flat structure as long as we can
+Try to stay DRY (Don't Repeat Yourself) or T-DRY
 ===================================================================================================================
 What is wildcard state?
+https://www.jvandemo.com/the-7-step-process-of-angular-router-navigation/
+
+wildcard state tell angular that if no routing module is found just revert it to component that is used earlier
 ===================================================================================================================
 How do you put animation between two states? 
+https://angular.io/guide/animations
+Motion is an important aspect in the design of modern web applications. Good user interfaces transition smoothly between states with engaging animations that call attention where it's needed. Well-designed animations can make a UI not only more fun but also easier to use.
+toggleState() {
+    this.state = this.state === 'active' ? 'inactive' : 'active';
+  }
+  import {  Component,  Input} from '@angular/core';
+import {  trigger,  state,  style,  animate,  transition} from '@angular/animations';
+animations: [
+  trigger('heroState', [
+    state('inactive', style({
+      backgroundColor: '#eee',
+      transform: 'scale(1)'
+    })),
+    state('active',   style({
+      backgroundColor: '#cfd8dc',
+      transform: 'scale(1.1)'
+    })),
+    transition('inactive => active', animate('100ms ease-in')),
+    transition('active => inactive', animate('100ms ease-out'))
+  ])
+]
+template: `
+  <ul>
+    <li *ngFor="let hero of heroes"
+        [@heroState]="hero.state"
+        (click)="hero.toggleState()">
+      {{hero.name}}
+    </li>
+  </ul>
+`,
+state('inactive', style({
+  backgroundColor: '#eee',
+  transform: 'scale(1)'
+})),
+state('active',   style({
+  backgroundColor: '#cfd8dc',
+  transform: 'scale(1.1)'
+})),
 ===================================================================================================================
 What would be a good use for NgZone service?
+https://angular.io/api/core/NgZone
+Angular 2 runs inside of its own special zone called NgZone and this special zone extends the basic functionality of a zone to facilitate change detection.
+It is Running inside a zone allows to detect when asynchronous tasks.
+If you change or update your internal application code or view and it is detecting the applications changes with help of NgZone.
+constructor(_ngZone:NgZone) {
+    window.onresize = (e) =>
+    {
+        _ngZone.run(() => {
+            this.width = window.innerWidth;
+            this.height = window.innerHeight;
+        });
+    };
+}
 ===================================================================================================================
 How would you protect a component being activated through the router?
+canActivate
 ===================================================================================================================
 How would you insert an embedded view from a prepared TemplateRef?
+View Containers are containers where one or more Views can be attached. Views represent some sort of layout to be rendered and the context under which to render it. View containers are anchored to components and are responsible for generating its output so this means that changing which views are attached to the view container affect the final rendered output of the component.
+Two types of views can be attached to a view container: Host Views which are linked to a Component, and Embedded Views which are linked to a template. Since structural directives interact with templates, we are interested in using Embedded Views in this case.
+You can create an embedded view using createEmbeddedView method then attach that view to the DOM via ViewContainerRef:
+
+@Component({
+    selector: 'app-root',
+    template: `
+        <ng-template #template let-name='fromContext'><div>{{name}}</ng-template>
+        <ng-container #vc></ng-container>
+    `
+})
+export class AppComponent implements AfterViewChecked {
+    @ViewChild('template', { read: TemplateRef }) _template: TemplateRef<any>;
+    @ViewChild('vc', {read: ViewContainerRef}) vc: ViewContainerRef;
+    constructor() { }
+
+    ngAfterViewChecked() {
+        const view = this._template.createEmbeddedView({fromContext: 'John'});
+        this.vc.insert(view);
+    }
+}
+ngAfterViewChecked() {
+    this.vc.createEmbeddedView(this._template, {fromContext: 'John'});
+}
 ===================================================================================================================
 What is attribute directive and why will you use it?
+An attribute directive minimally requires building a controller class annotated with @Directive, which specifies the selector that identifies the attribute. The controller class implements the desired directive behavior.
+
+This page demonstrates building a simple appHighlight attribute directive to set an element's background color when the user hovers over that element.
+import { Directive, ElementRef } from '@angular/core';
+
+@Directive({
+  selector: '[appHighlight]'
+})
+export class HighlightDirective {
+    constructor(el: ElementRef) {
+       el.nativeElement.style.backgroundColor = 'yellow';
+    }
+}
+To use the new HighlightDirective, add a paragraph (<p>) element to the template of the root AppComponent and apply the directive as an attribute.
+<p appHighlight>Highlight me!</p>
 ===================================================================================================================
 How will you intercept http to inject header to each http call?
+import { HTTP_INTERCEPTORS } from ‘@angular/common/http’;
+@Injectable()
+export class HttpsRequestInterceptor implements HttpInterceptor {
+ intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+const dupReq = req.clone({ headers: req.headers.set(‘Consumer-Secret’, ‘some sample key’) });
+return next.handle(dupReq);
+ }
+};
+@NgModule({
+ providers: [
+ { provide: HTTP_INTERCEPTORS, useClass: HttpsRequestInterceptor, multi: true }
+ ]
+})
+export class InterceptorModule { }
+----------------
+antoher example
+import { Injectable} from '@angular/core';
+import { HttpEvent, HttpInterceptor, HttpHandler, HttpRequest } from '@angular/common/http';
+
+@Injectable()
+export class MyFirstInterceptor implements HttpInterceptor {
+    intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+        console.log(req);
+        return next.handle(req);
+    }
+}
 ===================================================================================================================
 How would you create a component to display error messages throughout your application?
 ===================================================================================================================
 How will you parallelize multiple observable call?
+When we get the character back, we then need to fetch that character’s homeworld from the same API but a different REST endpoint. This example is sequential. Make one request then the next.
+@Component({
+  selector: 'app-root',
+  templateUrl: 'app/app.component.html'
+})
+export class AppComponent {
+  loadedCharacter: {};
+  constructor(private http: HttpClient) { }
+  
+  ngOnInit() {
+    this.http.get('/api/people/1').subscribe(character => {
+      this.http.get(character.homeworld).subscribe(homeworld => {
+        character.homeworld = homeworld;
+        this.loadedCharacter = character;
+      });
+    });
+  }
+}
 ===================================================================================================================
 How will you put one async call before another?
+someFunction() {
+  return returnsObservable()
+    .subscribe(
+      event => doForEachEvent(),
+      error => handleError(),
+      () => doSomethingNext()
+          .then(result => doSomethingAfterThat());
+}
+doSomethingNext() is executed after the last event and doSomethingAfterThat() is again chained with then() to show how to mix observable and promise. doSomething()
 ===================================================================================================================
 How can you use web worker in angular app?
+http://blog.brakmic.com/introduction-to-angular-2-part-5-webworkers/
+A WebWorker is a JavaScript file containing implementations of the onmessage event handler and the postMessage method. 
+WebWorkers react to incoming messages by executing onmessage handlers which usually end up calling the postMessage methods. 
+There are, of course, another event handlers available: onchange, onerror etc.  
+But the most important thing to be aware of isn’t the interface itself.
+ It’s actually the environment in which WebWorkers run. U
+ nlike most other browser scripts they must not access the DOM and have to run in a thread separated from the one that instantiated them.
+ The only way to send data from and to WebWorkers is via message passing (that is, postMessage)
+ . In our case we’re building a simple app comprising of three components and a single web worker.
+ import { Component,
+         OnInit, ChangeDetectorRef,
+         ChangeDetectionStrategy } from '@angular/core';
+
+@Component({
+    selector: 'my-app',
+    templateUrl: './my-app.component.html',
+    styleUrls: ['./my-app.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class MyAppComponent implements OnInit {
+    private worker: Worker;
+    private customersList: any[] = [];
+    private lastEntry: string = '';
+
+    constructor(private cd: ChangeDetectorRef) { }
+
+    public ngOnInit() {
+        this.initWebWorker();
+    }
+    /*
+    * Activate WebWorker which resides in a separate JS file
+    */
+    private initWebWorker() {
+        this.worker = new Worker('worker.js');
+        // `on-message` callback to receive data from worker
+        this.worker.addEventListener('message', (e: MessageEvent) => {
+          this.customersList = e.data;
+          this.lastEntry = `Got customers list with ${this.customersList.length} entries`;
+          this.cd.markForCheck();
+        });
+    }
+    /*
+    * Post a command to the worker
+    */
+    private onGetCustomersClicked($event) {
+        this.worker.postMessage({ table: 'Customers'});
+    }
+    /*
+    * React to row selections
+    */
+    private onRowSelected($event: { row: any }) {
+        this.lastEntry = `${$event.row.ContactName} selected`;
+    }
+}
 ===================================================================================================================
 What tools would you use to find a performance issue in your code?
+sonarqube
 ===================================================================================================================
 What are some ways you may improve your website's scrolling performance?
+Things you can do to improve performance issues on your website:
+1.	Page-level keyword answers and content level metrics
+2.	Dwell Time or Long Click Metrics
+3.	Existence and Reliability of Verified Real-world Business Details
+4.	Use of Responsive design for Uniform Content
+5.	Less duplicate content per page and site uniqueness
+6.	Solution-rich custom content
+7.	Entire Site Should be Mobile Optimized
+8.	Speed up Your Website: Lightning Fast Loading Pages
+9.	User searches for queries in tandem with a brand name, URL or site
+10.	Number of Clicks from Google SERPs to your Site
+11.	Prioritizing HTTPS/SSL
+12.	Links
 ===================================================================================================================
 Explain the difference between layout, painting and compositing.
 ===================================================================================================================
 How can you cancel a router navigation?
 ===================================================================================================================
 How would you animate routing?
+We used static routes to create the different navigation links (lines 5–6). To style the current section, we used the routerLinkActive directive. So for example, when we navigate to Home, it will add the active class and change rendering accordingly.	
+we need to add routerTransition, our animation trigger, to the component metadata (line 3). Then, we can bind @routerTransition in the main element
+Component({
+  selector: 'my-app',
+  animations: [ routerTransition ],
+  template: `
+    <main [@routerTransition]="getState(o)">
+      <router-outlet #o="outlet"></router-outlet>
+    </main>
+  `
+})
+export class App {
+  getState(outlet) {
+    return outlet.activatedRouteData.state;
+  }
+}
+https://medium.com/google-developer-experts/angular-supercharge-your-router-transitions-using-new-animation-features-v4-3-3eb341ede6c8
 ===================================================================================================================
 How would you cancel a promise on which you are waiting?
+canceller.resolve() should be called when you actually want to cancel that request. If the request was already made and you resolve the canceller, nothing will happen... you can´t cancel a finished request.
+canceller.resolve() will evoke the error callback of your request promise. One Note here: in order to determine if request was cancelled and did not fail because of any other error, I check for data.status === 0
+var requestPromise = $http({
+        url: 'data/en.json',
+        timeout: canceller.promise
+    });
+
+    requestPromise.
+        success(function(data, status, headers, config) {
+            // Everything fine and not cancelled
+        }).
+        error(function(data, status, headers, config) {
+            if(data.status === 0) {
+                // Request cancelled
+            }
+            else {
+                // Other error
+                throw 'Error ' + status
+            }
+        });
+
+    // This would happen at some later point in your code
+    canceller.resolve();
 ===================================================================================================================
 When does a lazy loaded module is loaded?
+Modules that are lazily loaded will only be loaded when the user navigates to their routes.
 ===================================================================================================================
 Why angular uses url segment?
+https://vsavkin.com/angular-router-understanding-router-state-7b5b95a12eab
+https://vsavkin.com/angular-router-understanding-redirects-2826177761fc
+A UrlSegment is a part of a URL between the two slashes. It contains a path and the matrix parameters associated with the segment.
+Interface ActivatedRouteSnapshot {
+  url: UrlSegment[];
+  params: {[name:string]:string};
+  data: {[name:string]:any};
+
+  queryParams: {[name:string]:string};
+  fragment: string;
+  
+  root: ActivatedRouteSnapshot;
+  parent: ActivatedRouteSnapshot;
+  firstchild: ActivatedRouteSnapshot;
+  children: ActivatedRouteSnapshot[];
+}
+RouterStateSnapshot is a tree of activated route snapshots. Every node in this tree knows about the “consumed” URL segments, the extracted parameters, and the resolved data
 ===================================================================================================================
-How will you make angular app secure?
+How will you make angular app secure?.
+Keep current with the latest Angular library releases. We regularly update the Angular libraries, and these updates may fix security defects discovered in previous versions. Check the Angular change log for security-related updates.
+
+Don't modify your copy of Angular. Private, customized versions of Angular tend to fall behind the current version and may not include important security fixes and enhancements. Instead, share your Angular improvements with the community and make a pull request.
+
+Avoid Angular APIs marked in the documentation as “Security Risk.” For more information, see the Trusting safe values section of this page.
+Cross-site scripting (XSS) enables attackers to inject malicious code into web pages. Such code can then, for example, steal user data (in particular, login data) or perform actions to impersonate the user. This is one of the most common attacks on the web.
+Angular treats all values as untrusted by default. When a value is inserted into the DOM from a template, via property, attribute, style, class binding, or interpolation, Angular sanitizes and escapes untrusted values
+Sanitization is the inspection of an untrusted value, turning it into a value that's safe to insert into the DOM. In many cases, sanitization doesn't change a value at all. Sanitization depends on context: a value that's harmless in CSS is potentially dangerous in a URL.
+Content Security Policy (CSP) is a defense-in-depth technique to prevent XSS. To enable CSP, configure your web server to return an appropriate Content-Security-Policy HTTP header.
+https://auth0.com/blog/angular-2-authentication/
 ===================================================================================================================
 How will you localize numbers currencies and dates?
+A module to translate texts & a module to translate texts, dates & numbers
+A module for validation by locales (numbers)
+Direct & Asynchronous loading of translation data
+Available providers for Asynchronous loading:
+Static (json files)
+WebAPI (json format)
+Fallback
+Custom
+Caching of the http requests
+npm install angular-l10n --save 
+Angular CLI No need to set up anything, just import it in your code.
+To get the translation, this library uses pure pipes
+Application internationalization is a many-faceted area of development, focused on making applications available and user-friendly to a worldwide audience.
+https://angular.io/guide/i18n
 ===================================================================================================================
 What is the best way to use translation in your app?
+<p>{{ 'hello world' | translate }}</p>
+this.translatedText = this.translate.instant('hello world');
+this.translate.use('es'); 
+https://scotch.io/tutorials/simple-language-translation-in-angular-2-part-1
 ===================================================================================================================
 How will you setup different environment build differently for your app
 ===================================================================================================================
 How will you use scss or css preprocessing with your application?	
 ===================================================================================================================
 How will you optimize image/svg in your angular app?
+https://blog.thoughtram.io/angular/2017/02/02/making-your-angular-app-fast.html
 ===================================================================================================================
 How would you make sure an api call that needs to be called only once but with multiple conditions? Example: if you need to get some data in multiple routes but, once you get it, you can reuse it in the routes that needs it, therefor no need to make another call to your backend apis.
 ===================================================================================================================
@@ -1173,6 +1750,44 @@ If you need to respond to two different Observable/Subject with one callback fun
 Why unsubscribing is important?
 ===================================================================================================================
 What is the difference between map and flatmap?
+Here is an example of the difference, as a spark-shell session:
+
+First, some data - two lines of text:
+
+val rdd = sc.parallelize(Seq("Roses are red", "Violets are blue"))  // lines
+
+rdd.collect
+
+    res0: Array[String] = Array("Roses are red", "Violets are blue")
+Now, map transforms an RDD of length N into another RDD of length N.
+
+For example, it maps from two lines into two line-lengths:
+
+rdd.map(_.length).collect
+
+    res1: Array[Int] = Array(13, 16)
+But flatMap (loosely speaking) transforms an RDD of length N into a collection of N collections, then flattens these into a single RDD of results.
+
+rdd.flatMap(_.split(" ")).collect
+
+    res2: Array[String] = Array("Roses", "are", "red", "Violets", "are", "blue")
+We have multiple words per line, and multiple lines, but we end up with a single output array of words
+
+Just to illustrate that, flatMapping from a collection of lines to a collection of words looks like:
+
+["aa bb cc", "", "dd"] => [["aa","bb","cc"],[],["dd"]] => ["aa","bb","cc","dd"]
+The input and output RDDs will therefore typically be of different sizes for flatMap.
+
+Finally, one useful special case is mapping with a function which might not return an answer, and so returns an Option. We can use flatMap to filter out the elements that return None and extract the values from those that return a Some:
+
+val rdd = sc.parallelize(Seq(1,2,3,4))
+
+def myfn(x: Int): Option[Int] = if (x <= 2) Some(x * 10) else None
+
+rdd.flatMap(myfn).collect
+
+    res3: Array[Int] = Array(10,20)
+(noting here that an Option behaves rather like a list that has either one element, or zero elements)
 ===================================================================================================================
 Whare are the different ways you can create an Observable?
 ===================================================================================================================
