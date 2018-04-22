@@ -6,3 +6,5 @@ Also the scjp guide.
 
 
 http://www3.cs.stonybrook.edu/~algorith/video-lectures/
+
+http://winterbe.com/blog/
