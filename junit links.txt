@@ -2,6 +2,9 @@ https://dzone.com/articles/mockito-basic-example-using-jdbc
 
 https://stackoverflow.com/questions/27590896/how-to-use-mockito-for-testing-database-connection
 
+https://examples.javacodegeeks.com/core-java/mockito/mockito-mock-database-connection-example/
+
+https://sanjitmohanty.wordpress.com/2011/07/24/mocking-db-calls-in-unit-test/
 ===============================================================
 public class MeanTaxFactorCalculator {
 private final TaxService taxService;
