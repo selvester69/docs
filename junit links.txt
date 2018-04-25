@@ -1,0 +1,190 @@
+https://dzone.com/articles/mockito-basic-example-using-jdbc
+
+https://stackoverflow.com/questions/27590896/how-to-use-mockito-for-testing-database-connection
+
+===============================================================
+public class MeanTaxFactorCalculator {
+private final TaxService taxService;
+public MeanTaxFactorCalculator(TaxService taxService) {
+this.taxService = taxService;
+}
+public double calculateMeanTaxFactorFor(Person person) {
+double currentTaxFactor =
+taxService.getCurrentTaxFactorFor(person);
+double anotherTaxFactor =
+taxService.getCurrentTaxFactorFor(person);
+return (currentTaxFactor + anotherTaxFactor) / 2;
+}
+}
+
+----------------------------------------------------------------
+@RunWith(MockitoJUnitRunner.class)
+public class MeanTaxFactorCalculatorTest {
+static final double TAX_FACTOR = 10;
+@Mock TaxService taxService;
+@InjectMocks MeanTaxFactorCalculator systemUnderTest;
+@Test
+public void should_calculate_mean_tax_factor() {
+// given
+given(taxService.getCurrentTaxFactorFor(any(Person.class))).willReturn(TAX_
+FACTOR);
+// when
+double meanTaxFactor =
+systemUnderTest.calculateMeanTaxFactorFor(new Person());
+// then
+then(meanTaxFactor).isEqualTo(TAX_FACTOR);
+}
+}
+
+===============================================================
+public class MeanTaxFactorCalculator {
+private final TaxService taxService;
+public MeanTaxFactorCalculator(TaxService taxService) {
+this.taxService = taxService;
+}
+public double calculateMeanTaxFactorFor(Person person) {
+double currentTaxFactor =
+taxService.getCurrentTaxFactorFor(person);
+double anotherTaxFactor =
+taxService.getCurrentTaxFactorFor(person);
+return (currentTaxFactor + anotherTaxFactor) / 2;
+}
+}
+----------------------------------------------------------------
+@RunWith(MockitoJUnitRunner.class)
+public class MeanTaxFactorCalculatorTest {
+static final double UNUSED_VALUE = 10;
+@Test
+public void should_calculate_mean_tax_factor() {
+// given
+TaxService taxService =
+given(Mockito.mock(TaxService.class).performAdditionalCalculation()).willRe
+turn(UNUSED_VALUE).getMock();
+MeanTaxFactorCalculator systemUnderTest =new
+MeanTaxFactorCalculator(taxService);
+// when
+double meanTaxFactor =
+systemUnderTest.calculateMeanTaxFactorFor(new Person());
+// then
+then(meanTaxFactor).isEqualTo(UNUSED_VALUE);
+}
+}
+===============================================================
+public class TaxFactorProcessor {
+public static final double INVALID_TAX_FACTOR = -1;
+private final TaxService taxService;
+public TaxFactorProcessor(TaxService taxService) {
+this.taxService = taxService;
+}
+public double processTaxFactorFor(Person person) {
+try {
+double taxFactor = taxService.calculateTaxFactorFor(person);
+taxService.updateTaxData(taxFactor, person);
+return taxFactor;
+} catch (Exception e) {
+System.err.printf("Exception [%s] occurred while trying to
+calculate tax factor for person[%s]%n", e, person.getName());
+return INVALID_TAX_FACTOR;
+}
+}
+}
+----------------------------------------------------------------
+public class TaxFactorProcessorTest {
+TaxService taxService = spy(new TaxService());
+TaxFactorProcessor systemUnderTest = new
+TaxFactorProcessor(taxService);
+@Test
+public void
+should_return_default_tax_factor_for_person_from_undefined_country() {
+// given
+doNothing().when(taxService).updateTaxData(anyDouble(),
+any(Person.class));
+// when
+double taxFactor = systemUnderTest.processTaxFactorFor(new
+Person());
+// then
+then(taxFactor).isEqualTo(TaxService.DEFAULT_TAX_FACTOR);
+}
+}
+===============================================================
+public class TaxFactorProcessor {
+public static final double INVALID_TAX_FACTOR = -1;
+private final TaxService taxService;
+public TaxFactorProcessor(TaxService taxService) {
+this.taxService = taxService;
+}
+public double processTaxFactorFor(Person person) {
+try {
+double taxFactor = taxService.calculateTaxFactorFor(person);
+taxService.updateTaxData(taxFactor, person);
+return taxFactor;
+} catch (Exception e) {
+System.err.printf("Exception [%s] occurred while trying to
+calculate tax factor for person [%s]%n", e, person.getName());
+return INVALID_TAX_FACTOR;
+}
+}
+}
+----------------------------------------------------------------
+@RunWith(MockitoJUnitRunner.class)
+public class TaxFactorProcessorTest {
+@Spy TaxService taxService;
+@InjectMocks TaxFactorProcessor systemUnderTest;
+@Test
+public void
+should_return_default_tax_factor_for_person_from_undefined_country() {
+// given
+doNothing().when(taxService).updateTaxData(anyDouble(),
+any(Person.class));
+// when
+double taxFactor = systemUnderTest.processTaxFactorFor(new
+Person());
+// then
+then(taxFactor).isEqualTo(TaxService.DEFAULT_TAX_FACTOR);
+}
+}
+===============================================================
+----------------------------------------------------------------
+===============================================================
+----------------------------------------------------------------
+===============================================================
+----------------------------------------------------------------
+===============================================================
+----------------------------------------------------------------
+===============================================================
+----------------------------------------------------------------
+===============================================================
+----------------------------------------------------------------
+===============================================================
+----------------------------------------------------------------
+===============================================================
+----------------------------------------------------------------
+===============================================================
+----------------------------------------------------------------
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
