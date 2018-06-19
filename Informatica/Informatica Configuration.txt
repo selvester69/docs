@@ -1,0 +1,36 @@
+Informatica and Oracle configuration details:
+
+1-            Client S/W path 
+
+\\In-hyd-bim02\Informatica 9 Client
+
+
+2-            Informatica Credentials:
+Domain Name: Domain_in-hyd-bim02
+Gateway Host Name: in-hyd-bim02
+Repository Name: rep_srvc_in-hyd-bim02
+Node Port Number: 6005
+
+Infa User ID: user1 to user30 
+Infa Password: Same as UserID
+
+3-            Oracle Credentials:
+UserID: bitrgu01 to bitrgu30 
+Password: Same as UserID.
+
+TNS Entry:
+BISOLN =
+  (DESCRIPTION =
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 
+
+punapp830.corp.capgemini.com)(PORT = 1521))
+    )
+    (CONNECT_DATA =
+      (SID = BISOLN)
+    )
+  )
+
+4-            path for source & target file
+\\IN-HYD-BIM02\src$     app path C:\Informatica\src$
+\\IN-HYD-BIM02\tgt$    app pathC:\Informatica\tgt$
